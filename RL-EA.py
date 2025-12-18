@@ -12,7 +12,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
-from sklearn.linear_model import LogisticRegression
+from sklearn.svm import LinearSVC
 from sklearn.metrics import accuracy_score
 
 # ---------------------------------------------------------
@@ -28,11 +28,12 @@ df["income"] = df["income"].apply(lambda x: 1 if ">50K" in str(x) else 0)
 # 2. Define Predicates (Actions / Data Sources)
 # ---------------------------------------------------------
 predicates = {
-    "young": df[df["age"] < 30],
-    "high_education": df[df["education"].isin(["Bachelors", "Masters", "Doctorate"])],
+    "young": df[df["age"] < 35],
+    "high_education": df[df["education"].isin(["Bachelors", "Masters", "Doctorate", "Some-college"])],
     "long_hours": df[df["hours.per.week"] > 50],
     "managerial": df[df["occupation"].str.contains("Manager", na=False)],
-    "capital_gain": df[df["capital.gain"] > 0]
+    "capital_gain": df[df["capital.gain"] > 0],
+    "married": df[df["marital.status"].str.contains("Married", na=False)]
 }
 
 # ---------------------------------------------------------
@@ -51,8 +52,9 @@ preprocess = ColumnTransformer([
 def make_model():
     return Pipeline([
         ("prep", preprocess),
-        ("clf", LogisticRegression(max_iter=1000, n_jobs=-1))
+        ("clf", LinearSVC(max_iter=5000))
     ])
+
 
 # ---------------------------------------------------------
 # 4. Budget / Acquisition Parameters
