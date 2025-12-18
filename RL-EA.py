@@ -158,7 +158,10 @@ def run_rlea(df, predicates, total_budget, batch_size, eps_start, eps_decay):
     remaining = total_budget
     epsilon = eps_start
     current_accuracy = 0.0
+    SMOOTH_K = 3  # moving window
 
+    acc_window = []
+    current_smoothed = 0.0
     while remaining > 0:
         # choose action
         if np.random.rand() < epsilon:
@@ -183,10 +186,6 @@ def run_rlea(df, predicates, total_budget, batch_size, eps_start, eps_decay):
 
         new_accuracy = train_and_evaluate(model, train_data)
         accuracy_history.append(new_accuracy)
-        SMOOTH_K = 3  # moving window
-
-        acc_window = []
-        current_smoothed = 0.0
 
         # after you compute new_accuracy:
         acc_window.append(new_accuracy)
