@@ -162,8 +162,8 @@ def run_rlea(df, predicates, total_budget, batch_size, eps_start, eps_decay):
     current_accuracy = 0.0
     SMOOTH_K = 3  # moving window
 
-    acc_window = []
-    current_smoothed = 0.0
+    acc_window = {p: [] for p in predicates}
+    current_smoothed = {p: 0.0 for p in predicates}
     while remaining > 0:
         # choose action
         if np.random.rand() < epsilon:
@@ -189,22 +189,22 @@ def run_rlea(df, predicates, total_budget, batch_size, eps_start, eps_decay):
         new_accuracy = train_and_evaluate(model, train_data)
         accuracy_history.append(new_accuracy)
 
-        # after you compute new_accuracy:
-        acc_window.append(new_accuracy)
-        if len(acc_window) > SMOOTH_K:
-            acc_window.pop(0)
+        # update sliding window for the selected predicate
+        acc_window[action].append(new_accuracy)
+        if len(acc_window[action]) > SMOOTH_K:
+            acc_window[action].pop(0)
 
-        new_smoothed = float(np.mean(acc_window))
-        reward = new_smoothed - current_smoothed
-        current_smoothed = new_smoothed
+        new_smoothed = float(np.mean(acc_window[action]))
+        reward = new_smoothed - current_smoothed[action]
+        current_smoothed[action] = new_smoothed
+
+        # optional: stabilize learning
+        reward = np.clip(reward, -0.05, 0.05)
 
         counts[action] += 1
         Q[action] += (reward - Q[action]) / counts[action]
 
         policy_usage[action] += 1
-
-        if not np.isnan(new_accuracy):
-            current_accuracy = new_accuracy
 
         remaining -= batch_size
         epsilon *= eps_decay
